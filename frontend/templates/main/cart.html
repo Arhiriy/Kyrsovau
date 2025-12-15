@@ -1,0 +1,701 @@
+{% extends "main/header.html" %}
+{% load static %}
+
+{% block title %}Корзина - Магазин кулинарных ингредиентов{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'decoration/cart.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="cart-page">
+    <div class="container">
+        <!-- Хлебные крошки -->
+        <nav class="breadcrumbs">
+            <a href="{% url 'home' %}">Главная</a>
+            <span>/</span>
+            <span class="current">Корзина</span>
+        </nav>
+
+        <h1 class="page-title">Корзина покупок</h1>
+
+        <div class="cart-container">
+            <!-- Основная часть корзины -->
+            <div class="cart-main">
+                {% if cart.items %}
+                <div class="cart-header">
+                    <div class="header-item">Товар</div>
+                    <div class="header-item">Цена</div>
+                    <div class="header-item">Количество</div>
+                    <div class="header-item">Итого</div>
+                    <div class="header-item"></div>
+                </div>
+
+                <div class="cart-items" id="cart-items">
+                    <!-- Товары будут загружены через JavaScript -->
+                    <div class="loading-cart">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Загрузка корзины...</p>
+                    </div>
+                </div>
+
+                <div class="cart-actions">
+                    <button class="btn btn-outline" id="clear-cart">
+                        <i class="fas fa-trash"></i> Очистить корзину
+                    </button>
+                    <a href="{% url 'catalog' %}" class="btn btn-outline">
+                        <i class="fas fa-arrow-left"></i> Продолжить покупки
+                    </a>
+                </div>
+                {% else %}
+                <div class="empty-cart">
+                    <div class="empty-cart-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h2>Ваша корзина пуста</h2>
+                    <p>Добавьте товары из каталога, чтобы сделать заказ</p>
+                    <a href="{% url 'catalog' %}" class="btn btn-primary">
+                        <i class="fas fa-utensils"></i> Перейти в каталог
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Боковая панель с итогами -->
+            {% if cart.items %}
+            <div class="cart-sidebar">
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">Итог заказа</h3>
+                    
+                    <div class="summary-item">
+                        <span>Товары (<span id="total-items-count">0</span> шт.)</span>
+                        <span id="subtotal-price">0 ₽</span>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <span>Доставка</span>
+                        <span id="delivery-cost">0 ₽</span>
+                    </div>
+                    
+                    <div class="summary-divider"></div>
+                    
+                    <div class="summary-total">
+                        <span>Итого к оплате</span>
+                        <span id="total-price">0 ₽</span>
+                    </div>
+                    
+                    <div class="promo-code">
+                        <input type="text" id="promo-code-input" placeholder="Промокод">
+                        <button id="apply-promo" class="btn btn-small">Применить</button>
+                    </div>
+                    
+                    <div id="promo-message" class="promo-message"></div>
+                    
+                    <a href="{% url 'order' %}" class="btn btn-primary btn-large btn-block" id="checkout-btn">
+                        <i class="fas fa-lock"></i> Оформить заказ
+                    </a>
+                    
+                    <div class="secure-payment">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Безопасная оплата</span>
+                    </div>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">Доставка</h3>
+                    <div class="delivery-options">
+                        <label class="delivery-option">
+                            <input type="radio" name="delivery" value="courier" checked>
+                            <div class="option-content">
+                                <span class="option-title">Курьерская доставка</span>
+                                <span class="option-price" id="courier-price">от 300 ₽</span>
+                            </div>
+                        </label>
+                        
+                        <label class="delivery-option">
+                            <input type="radio" name="delivery" value="post">
+                            <div class="option-content">
+                                <span class="option-title">Почта России</span>
+                                <span class="option-price" id="post-price">от 250 ₽</span>
+                            </div>
+                        </label>
+                        
+                        <label class="delivery-option">
+                            <input type="radio" name="delivery" value="pickup">
+                            <div class="option-content">
+                                <span class="option-title">Самовывоз</span>
+                                <span class="option-price">бесплатно</span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="delivery-calculator">
+                        <input type="text" id="delivery-city" placeholder="Ваш город" value="Москва">
+                        <button id="calculate-delivery" class="btn btn-small">Рассчитать</button>
+                    </div>
+                    <div id="delivery-result" class="delivery-result"></div>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">Рекомендуем добавить</h3>
+                    <div class="recommended-items" id="recommended-items">
+                        <div class="loading-recommended">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Восстановленные товары (если есть) -->
+        <div class="restored-items" id="restored-items" style="display: none;">
+            <h3>Ранее вы удалили из корзины</h3>
+            <div class="restored-list"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'work/cart.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Загрузка корзины
+    loadCart();
+    
+    // Загрузка рекомендованных товаров
+    loadRecommendedProducts();
+    
+    // Инициализация элементов управления
+    initControls();
+
+    function loadCart() {
+        fetch('/api/cart/')
+            .then(response => response.json())
+            .then(data => {
+                updateCartUI(data);
+            })
+            .catch(error => {
+                console.error('Error loading cart:', error);
+                showNotification('Ошибка загрузки корзины', 'error');
+            });
+    }
+
+    function updateCartUI(cartData) {
+        const cartItems = document.getElementById('cart-items');
+        const emptyCart = document.querySelector('.empty-cart');
+        
+        if (cartData.items && cartData.items.length > 0) {
+            // Показываем корзину
+            if (emptyCart) emptyCart.style.display = 'none';
+            document.querySelector('.cart-header').style.display = 'flex';
+            document.querySelector('.cart-actions').style.display = 'flex';
+            
+            // Обновляем товары
+            cartItems.innerHTML = '';
+            cartData.items.forEach(item => {
+                cartItems.appendChild(createCartItem(item));
+            });
+            
+            // Обновляем итоги
+            updateSummary(cartData);
+        } else {
+            // Показываем пустую корзину
+            if (emptyCart) emptyCart.style.display = 'block';
+            document.querySelector('.cart-header').style.display = 'none';
+            document.querySelector('.cart-actions').style.display = 'none';
+            document.querySelector('.cart-sidebar').style.display = 'none';
+            cartItems.innerHTML = '';
+        }
+    }
+
+    function createCartItem(item) {
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.setAttribute('data-product-id', item.id);
+        
+        const isAvailable = item.available;
+        const maxQuantity = Math.min(item.stock, 100);
+        
+        div.innerHTML = `
+            <div class="item-product">
+                <div class="product-image">
+                    <img src="${item.image || '/static/img/default-product.jpg'}" alt="${item.name}">
+                </div>
+                <div class="product-details">
+                    <a href="/ingredient/${item.slug}/" class="product-name">${item.name}</a>
+                    <div class="product-measure">${item.measure_unit}</div>
+                    ${!isAvailable ? '<div class="stock-warning">Мало на складе</div>' : ''}
+                </div>
+            </div>
+            
+            <div class="item-price">
+                <div class="price-value">${item.price.toFixed(2)} ₽</div>
+            </div>
+            
+            <div class="item-quantity">
+                <div class="quantity-control">
+                    <button class="quantity-btn minus" ${item.quantity <= item.min_order_quantity ? 'disabled' : ''}>-</button>
+                    <input type="number" class="quantity-input" 
+                           value="${item.quantity}" 
+                           min="${item.min_order_quantity}" 
+                           max="${maxQuantity}"
+                           ${!isAvailable ? 'disabled' : ''}>
+                    <button class="quantity-btn plus" ${item.quantity >= maxQuantity ? 'disabled' : ''}>+</button>
+                </div>
+                <div class="min-order">мин. ${item.min_order_quantity}</div>
+            </div>
+            
+            <div class="item-total">
+                <div class="total-value">${(item.price * item.quantity).toFixed(2)} ₽</div>
+            </div>
+            
+            <div class="item-actions">
+                <button class="remove-item" title="Удалить">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <button class="save-later" title="Отложить">
+                    <i class="fas fa-heart"></i>
+                </button>
+            </div>
+        `;
+        
+        // Обработчики событий
+        const minusBtn = div.querySelector('.minus');
+        const plusBtn = div.querySelector('.plus');
+        const quantityInput = div.querySelector('.quantity-input');
+        const removeBtn = div.querySelector('.remove-item');
+        const saveBtn = div.querySelector('.save-later');
+        
+        minusBtn.addEventListener('click', () => updateQuantity(item.id, parseInt(quantityInput.value) - 1));
+        plusBtn.addEventListener('click', () => updateQuantity(item.id, parseInt(quantityInput.value) + 1));
+        
+        quantityInput.addEventListener('change', function() {
+            let value = parseInt(this.value);
+            const min = parseInt(this.min);
+            const max = parseInt(this.max);
+            
+            if (isNaN(value) || value < min) {
+                value = min;
+            } else if (value > max) {
+                value = max;
+            }
+            
+            this.value = value;
+            updateQuantity(item.id, value);
+        });
+        
+        removeBtn.addEventListener('click', () => removeFromCart(item.id));
+        saveBtn.addEventListener('click', () => moveToWishlist(item.id));
+        
+        return div;
+    }
+
+    function updateSummary(cartData) {
+        // Обновляем счетчики и цены
+        document.getElementById('total-items-count').textContent = cartData.total_quantity || 0;
+        document.getElementById('subtotal-price').textContent = cartData.total_price.toFixed(2) + ' ₽';
+        
+        // Рассчитываем стоимость доставки
+        calculateDelivery(cartData.total_price);
+        
+        // Обновляем кнопку оформления
+        const checkoutBtn = document.getElementById('checkout-btn');
+        if (cartData.total_price > 0) {
+            checkoutBtn.disabled = false;
+        } else {
+            checkoutBtn.disabled = true;
+        }
+    }
+
+    function calculateDelivery(subtotal) {
+        const deliveryMethod = document.querySelector('input[name="delivery"]:checked').value;
+        const cityInput = document.getElementById('delivery-city');
+        const city = cityInput.value || 'Москва';
+        
+        fetch(`/api/orders/delivery-costs/calculate/?city=${encodeURIComponent(city)}&method=${deliveryMethod}&total=${subtotal}`)
+            .then(response => response.json())
+            .then(data => {
+                const deliveryCost = data.cost || 0;
+                const totalPrice = subtotal + deliveryCost;
+                
+                document.getElementById('delivery-cost').textContent = deliveryCost.toFixed(2) + ' ₽';
+                document.getElementById('total-price').textContent = totalPrice.toFixed(2) + ' ₽';
+                
+                // Сохраняем стоимость доставки в sessionStorage для использования на странице оформления
+                sessionStorage.setItem('deliveryCost', deliveryCost);
+                sessionStorage.setItem('deliveryMethod', deliveryMethod);
+                sessionStorage.setItem('deliveryCity', city);
+            })
+            .catch(error => {
+                console.error('Error calculating delivery:', error);
+                // Устанавливаем стоимость по умолчанию
+                const defaultCost = deliveryMethod === 'pickup' ? 0 : 
+                                  deliveryMethod === 'post' ? 250 : 300;
+                const totalPrice = subtotal + defaultCost;
+                
+                document.getElementById('delivery-cost').textContent = defaultCost.toFixed(2) + ' ₽';
+                document.getElementById('total-price').textContent = totalPrice.toFixed(2) + ' ₽';
+            });
+    }
+
+    function updateQuantity(productId, quantity) {
+        fetch('/api/cart/', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                quantity: quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                loadCart(); // Перезагружаем всю корзину
+                showNotification('Количество обновлено', 'success');
+            } else if (data.error) {
+                showNotification(data.error, 'error');
+                loadCart(); // Перезагружаем для синхронизации
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Ошибка обновления количества', 'error');
+        });
+    }
+
+    function removeFromCart(productId) {
+        if (!confirm('Удалить товар из корзины?')) return;
+        
+        fetch('/api/cart/', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ product_id: productId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                showNotification('Товар удален из корзины', 'info');
+                loadCart();
+                updateCartCount();
+                
+                // Сохраняем удаленный товар для возможного восстановления
+                saveRemovedItem(productId);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Ошибка удаления товара', 'error');
+        });
+    }
+
+    function moveToWishlist(productId) {
+        {% if user.is_authenticated %}
+        fetch('/api/wishlist/add_product/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ product_id: productId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                showNotification('Товар добавлен в список желаний', 'success');
+                updateWishlistCount();
+                
+                // Удаляем из корзины после добавления в список желаний
+                removeFromCart(productId);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Ошибка добавления в список желаний', 'error');
+        });
+        {% else %}
+        showNotification('Войдите в систему, чтобы использовать список желаний', 'warning');
+        {% endif %}
+    }
+
+    function saveRemovedItem(productId) {
+        let removedItems = JSON.parse(localStorage.getItem('removedCartItems') || '[]');
+        removedItems.push({
+            productId: productId,
+            removedAt: new Date().toISOString()
+        });
+        
+        // Храним только последние 10 удаленных товаров
+        if (removedItems.length > 10) {
+            removedItems = removedItems.slice(-10);
+        }
+        
+        localStorage.setItem('removedCartItems', JSON.stringify(removedItems));
+        
+        // Показываем восстановленные товары, если они есть
+        showRestoredItems();
+    }
+
+    function showRestoredItems() {
+        const removedItems = JSON.parse(localStorage.getItem('removedCartItems') || '[]');
+        const restoredContainer = document.getElementById('restored-items');
+        const restoredList = restoredContainer.querySelector('.restored-list');
+        
+        if (removedItems.length > 0) {
+            restoredContainer.style.display = 'block';
+            restoredList.innerHTML = '';
+            
+            // Показываем только недавно удаленные (последние 3)
+            removedItems.slice(-3).forEach(item => {
+                // Загружаем информацию о товаре
+                fetch(`/api/products/${item.productId}/`)
+                    .then(response => response.json())
+                    .then(product => {
+                        const div = document.createElement('div');
+                        div.className = 'restored-item';
+                        div.innerHTML = `
+                            <img src="${product.images?.[0]?.image || '/static/img/default-product.jpg'}" 
+                                 alt="${product.name}">
+                            <div class="restored-info">
+                                <div class="restored-name">${product.name}</div>
+                                <div class="restored-price">${product.formatted_price}</div>
+                            </div>
+                            <button class="btn btn-small restore-btn" data-product-id="${product.id}">
+                                Восстановить
+                            </button>
+                        `;
+                        
+                        div.querySelector('.restore-btn').addEventListener('click', function() {
+                            addToCart(product.id);
+                            // Удаляем из списка удаленных
+                            const updatedItems = removedItems.filter(i => i.productId != product.id);
+                            localStorage.setItem('removedCartItems', JSON.stringify(updatedItems));
+                            showRestoredItems();
+                        });
+                        
+                        restoredList.appendChild(div);
+                    })
+                    .catch(error => console.error('Error loading restored item:', error));
+            });
+        } else {
+            restoredContainer.style.display = 'none';
+        }
+    }
+
+    function loadRecommendedProducts() {
+        fetch('/api/products/featured/?limit=3')
+            .then(response => response.json())
+            .then(products => {
+                const container = document.getElementById('recommended-items');
+                container.innerHTML = '';
+                
+                products.forEach(product => {
+                    container.appendChild(createRecommendedItem(product));
+                });
+            })
+            .catch(error => {
+                console.error('Error loading recommended products:', error);
+                document.getElementById('recommended-items').innerHTML = 
+                    '<p class="error">Ошибка загрузки</p>';
+            });
+    }
+
+    function createRecommendedItem(product) {
+        const div = document.createElement('div');
+        div.className = 'recommended-item';
+        
+        const image = product.images && product.images.length > 0 
+            ? product.images[0].image 
+            : '/static/img/default-product.jpg';
+        
+        div.innerHTML = `
+            <div class="recommended-image">
+                <img src="${image}" alt="${product.name}">
+            </div>
+            <div class="recommended-info">
+                <a href="/ingredient/${product.slug}/" class="recommended-name">${product.name}</a>
+                <div class="recommended-price">${product.formatted_price}</div>
+                <button class="btn btn-small add-to-cart-recommended" data-product-id="${product.id}">
+                    <i class="fas fa-cart-plus"></i>
+                </button>
+            </div>
+        `;
+        
+        div.querySelector('.add-to-cart-recommended').addEventListener('click', function(e) {
+            e.preventDefault();
+            addToCart(product.id);
+        });
+        
+        return div;
+    }
+
+    function initControls() {
+        // Очистка корзины
+        const clearCartBtn = document.getElementById('clear-cart');
+        if (clearCartBtn) {
+            clearCartBtn.addEventListener('click', function() {
+                if (!confirm('Очистить всю корзину?')) return;
+                
+                fetch('/api/cart/', {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        showNotification('Корзина очищена', 'info');
+                        loadCart();
+                        updateCartCount();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Ошибка очистки корзины', 'error');
+                });
+            });
+        }
+        
+        // Выбор способа доставки
+        document.querySelectorAll('input[name="delivery"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Пересчитываем стоимость доставки
+                fetch('/api/cart/')
+                    .then(response => response.json())
+                    .then(data => {
+                        calculateDelivery(data.total_price);
+                    });
+            });
+        });
+        
+        // Калькулятор доставки
+        const calculateBtn = document.getElementById('calculate-delivery');
+        if (calculateBtn) {
+            calculateBtn.addEventListener('click', function() {
+                const cityInput = document.getElementById('delivery-city');
+                const city = cityInput.value.trim();
+                
+                if (!city) {
+                    showNotification('Введите город', 'warning');
+                    return;
+                }
+                
+                fetch('/api/cart/')
+                    .then(response => response.json())
+                    .then(data => {
+                        calculateDelivery(data.total_price);
+                        showNotification('Стоимость доставки обновлена', 'success');
+                    });
+            });
+        }
+        
+        // Промокод
+        const applyPromoBtn = document.getElementById('apply-promo');
+        const promoInput = document.getElementById('promo-code-input');
+        const promoMessage = document.getElementById('promo-message');
+        
+        applyPromoBtn.addEventListener('click', function() {
+            const promoCode = promoInput.value.trim();
+            
+            if (!promoCode) {
+                showNotification('Введите промокод', 'warning');
+                return;
+            }
+            
+            // Здесь должен быть запрос к серверу для проверки промокода
+            // Временно имитируем проверку
+            if (promoCode.toUpperCase() === 'WELCOME10') {
+                promoMessage.innerHTML = '<span class="success">Промокод применен! Скидка 10%</span>';
+                applyDiscount(0.1);
+            } else if (promoCode.toUpperCase() === 'FREE200') {
+                promoMessage.innerHTML = '<span class="success">Промокод применен! Бесплатная доставка</span>';
+                applyFreeDelivery();
+            } else {
+                promoMessage.innerHTML = '<span class="error">Промокод недействителен</span>';
+            }
+        });
+        
+        // Восстановленные товары
+        showRestoredItems();
+    }
+
+    function applyDiscount(percent) {
+        fetch('/api/cart/')
+            .then(response => response.json())
+            .then(data => {
+                const discount = data.total_price * percent;
+                const newTotal = data.total_price - discount;
+                
+                document.getElementById('subtotal-price').innerHTML = `
+                    <span class="old-price">${data.total_price.toFixed(2)} ₽</span>
+                    <span class="new-price">${newTotal.toFixed(2)} ₽</span>
+                `;
+                
+                // Пересчитываем итог с учетом скидки
+                calculateDelivery(newTotal);
+                
+                // Сохраняем скидку для использования при оформлении
+                sessionStorage.setItem('discount', discount);
+                sessionStorage.setItem('discountPercent', percent * 100);
+            });
+    }
+
+    function applyFreeDelivery() {
+        document.getElementById('delivery-cost').innerHTML = `
+            <span class="old-price" style="text-decoration: line-through;">300 ₽</span>
+            <span class="new-price">0 ₽</span>
+        `;
+        
+        fetch('/api/cart/')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('total-price').textContent = data.total_price.toFixed(2) + ' ₽';
+            });
+        
+        // Отмечаем бесплатную доставку
+        sessionStorage.setItem('freeDelivery', 'true');
+    }
+
+    // Вспомогательные функции (должны быть подключены)
+    function addToCart(productId, quantity = 1) {
+        fetch('/api/cart/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                quantity: quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                showNotification('Товар добавлен в корзину!', 'success');
+                loadCart();
+                updateCartCount();
+            } else if (data.error) {
+                showNotification(data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Ошибка добавления в корзину', 'error');
+        });
+    }
+
+    // Остальные вспомогательные функции (getCookie, showNotification, updateCartCount, updateWishlistCount)
+    // должны быть определены в основном скрипте
+});
+</script>
+{% endblock %}

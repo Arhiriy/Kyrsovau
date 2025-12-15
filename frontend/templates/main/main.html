@@ -1,0 +1,376 @@
+{% extends "main/header.html" %}
+{% load static %}
+
+{% block title %}Главная - Магазин кулинарных ингредиентов{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'decoration/main.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Герой-секция -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">Кулинарные ингредиенты премиум-класса</h1>
+            <p class="hero-subtitle">Более 1000 видов специй, масел, соусов и ингредиентов для ваших кулинарных шедевров</p>
+            <div class="hero-buttons">
+                <a href="{% url 'catalog' %}" class="btn btn-primary">В каталог</a>
+                <a href="#featured" class="btn btn-secondary">Рекомендуемое</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Преимущества -->
+<section class="advantages-section">
+    <div class="container">
+        <h2 class="section-title">Почему выбирают нас</h2>
+        <div class="advantages-grid">
+            <div class="advantage-card">
+                <div class="advantage-icon">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <h3>Натуральные продукты</h3>
+                <p>Все ингредиенты высшего качества, без искусственных добавок</p>
+            </div>
+            
+            <div class="advantage-card">
+                <div class="advantage-icon">
+                    <i class="fas fa-shipping-fast"></i>
+                </div>
+                <h3>Быстрая доставка</h3>
+                <p>Доставка по Москве за 2 часа, по России - от 1 дня</p>
+            </div>
+            
+            <div class="advantage-card">
+                <div class="advantage-icon">
+                    <i class="fas fa-award"></i>
+                </div>
+                <h3>Гарантия качества</h3>
+                <p>Сертифицированная продукция от проверенных поставщиков</p>
+            </div>
+            
+            <div class="advantage-card">
+                <div class="advantage-icon">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <h3>Экспертная поддержка</h3>
+                <p>Консультации от профессиональных шеф-поваров</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Популярные категории -->
+<section class="categories-section">
+    <div class="container">
+        <h2 class="section-title">Популярные категории</h2>
+        <div class="categories-grid">
+            <a href="{% url 'catalog' %}?category=spices" class="category-card">
+                <div class="category-image">
+                    <img src="{% static 'img/spices.jpg' %}" alt="Специи">
+                </div>
+                <div class="category-content">
+                    <h3>Специи и пряности</h3>
+                    <p>Более 200 видов от классических до экзотических</p>
+                </div>
+            </a>
+            
+            <a href="{% url 'catalog' %}?category=oils" class="category-card">
+                <div class="category-image">
+                    <img src="{% static 'img/oils.jpg' %}" alt="Масла">
+                </div>
+                <div class="category-content">
+                    <h3>Масла и уксусы</h3>
+                    <p>Растительные масла и бальзамические уксусы</p>
+                </div>
+            </a>
+            
+            <a href="{% url 'catalog' %}?category=grains" class="category-card">
+                <div class="category-image">
+                    <img src="{% static 'img/grains.jpg' %}" alt="Крупы">
+                </div>
+                <div class="category-content">
+                    <h3>Крупы и злаки</h3>
+                    <p>Ароматные рисы, киноа, булгур и другие</p>
+                </div>
+            </a>
+            
+            <a href="{% url 'catalog' %}?category=herbs" class="category-card">
+                <div class="category-image">
+                    <img src="{% static 'img/herbs.jpg' %}" alt="Травы">
+                </div>
+                <div class="category-content">
+                    <h3>Сушеные травы</h3>
+                    <p>Свежесушеные травы со всего мира</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Рекомендуемые товары -->
+<section id="featured" class="featured-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Рекомендуемые товары</h2>
+            <a href="{% url 'catalog' %}?featured=true" class="view-all">Смотреть все</a>
+        </div>
+        
+        <div class="products-grid" id="featured-products">
+            <!-- Товары будут загружены через JavaScript -->
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Загрузка товаров...</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Отзывы -->
+<section class="reviews-section">
+    <div class="container">
+        <h2 class="section-title">Отзывы покупателей</h2>
+        
+        <div class="reviews-slider">
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="reviewer-avatar">
+                        <img src="{% static 'img/avatar1.jpg' %}" alt="Мария">
+                    </div>
+                    <div class="reviewer-info">
+                        <h4>Мария Иванова</h4>
+                    </div>
+                </div>
+                <p class="review-text">
+                    "Заказываю специи регулярно. Качество всегда на высоте, доставка быстрая. Особенно нравится итальянский орегано!"
+                </p>
+            </div>
+            
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="reviewer-avatar">
+                        <img src="{% static 'img/avatar2.jpg' %}" alt="Алексей">
+                    </div>
+                    <div class="reviewer-info">
+                        <h4>Алексей Петров</h4>
+                    </div>
+                </div>
+                <p class="review-text">
+                    "Как шеф-повар, очень требователен к качеству ингредиентов. Этот магазин - мой основной поставщик уже больше года."
+                </p>
+            </div>
+            
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="reviewer-avatar">
+                        <img src="{% static 'img/avatar3.jpg' %}" alt="Елена">
+                    </div>
+                    <div class="reviewer-info">
+                        <h4>Елена Смирнова</h4>
+                    </div>
+                </div>
+                <p class="review-text">
+                    "Отличный выбор редких ингредиентов для азиатской кухни. Нашла здесь все, что нужно для приготовления аутентичных блюд."
+                </p>reviews-slider-nav
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Рассылка -->
+<section class="newsletter-section">
+    <div class="container">
+        <div class="newsletter-content">
+            <h2>Подпишитесь на рассылку</h2>
+            <p>Получайте новости об акциях, новые рецепты и специальные предложения</p>
+            
+            <form class="newsletter-form" id="newsletter-form">
+                <input type="email" placeholder="Ваш email" required>
+                <button type="submit" class="btn btn-primary">Подписаться</button>
+            </form>
+            
+            <p class="privacy-note">Подписываясь, вы соглашаетесь с нашей <a href="#">Политикой конфиденциальности</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'work/main.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Загрузка рекомендуемых товаров
+    loadFeaturedProducts();
+    
+    // Загрузка новинок
+    loadNewProducts();
+    
+    // Обработка формы рассылки
+    const newsletterForm = document.getElementById('newsletter-form');
+    if (newsletterForm) {
+        newsletterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = this.querySelector('input[type="email"]').value;
+            
+            // Здесь должен быть AJAX запрос на сервер
+            alert(`Спасибо за подписку! На email ${email} будут отправлены наши новости.`);
+            this.reset();
+        });
+    }
+    
+    function loadFeaturedProducts() {
+        fetch('/api/products/featured/')
+            .then(response => response.json())
+            .then(products => {
+                const container = document.getElementById('featured-products');
+                if (products.length > 0) {
+                    container.innerHTML = '';
+                    products.forEach(product => {
+                        container.appendChild(createProductCard(product));
+                    });
+                } else {
+                    container.innerHTML = '<p class="no-products">Нет рекомендуемых товаров</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading featured products:', error);
+                document.getElementById('featured-products').innerHTML = 
+                    '<p class="error">Ошибка загрузки товаров</p>';
+            });
+    }
+    
+    function loadNewProducts() {
+        fetch('/api/products/new_arrivals/')
+            .then(response => response.json())
+            .then(products => {
+                const container = document.getElementById('new-products');
+                if (products.length > 0) {
+                    container.innerHTML = '';
+                    products.forEach(product => {
+                        container.appendChild(createProductCard(product));
+                    });
+                } else {
+                    container.innerHTML = '<p class="no-products">Нет новых товаров</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading new products:', error);
+                document.getElementById('new-products').innerHTML = 
+                    '<p class="error">Ошибка загрузки товаров</p>';
+            });
+    }
+    
+    function createProductCard(product) {
+        const div = document.createElement('div');
+        div.className = 'product-card';
+        
+        const image = product.images && product.images.length > 0 
+            ? product.images[0].image 
+            : '/static/img/default-product.jpg';
+        
+        div.innerHTML = `
+            <a href="/ingredient/${product.slug}/" class="product-link">
+                <div class="product-image">
+                    <img src="${image}" alt="${product.name}">
+                    ${product.is_featured ? '<span class="featured-badge">Рекомендуем</span>' : ''}
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">${product.name}</h3>
+                    <div class="product-category">${product.category ? product.category.name : ''}</div>
+                    <div class="product-price">${product.formatted_price}</div>
+                    <div class="product-measure">${product.measure_with_weight}</div>
+                </div>
+            </a>
+            <button class="add-to-cart-btn" data-product-id="${product.id}">
+                <i class="fas fa-shopping-cart"></i> В корзину
+            </button>
+        `;
+        
+        // Обработчик кнопки "В корзину"
+        const addToCartBtn = div.querySelector('.add-to-cart-btn');
+        addToCartBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const productId = this.getAttribute('data-product-id');
+            addToCart(productId);
+        });
+        
+        return div;
+    }
+    
+    function addToCart(productId) {
+        fetch('/api/cart/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                quantity: 1
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                showNotification('Товар добавлен в корзину!', 'success');
+                // Обновляем счетчик корзины
+                updateCartCount();
+            } else if (data.error) {
+                showNotification(data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Ошибка добавления в корзину', 'error');
+        });
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            <span>${message}</span>
+            <button class="notification-close"><i class="fas fa-times"></i></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Анимация появления
+        setTimeout(() => notification.classList.add('show'), 10);
+        
+        // Автоматическое скрытие
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+        
+        // Закрытие по клику
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        });
+    }
+});
+</script>
+{% endblock %}

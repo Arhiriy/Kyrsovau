@@ -1,0 +1,715 @@
+{% extends "main/header.html" %}
+{% load static %}
+
+{% block title %}Каталог ингредиентов - Магазин кулинарных ингредиентов{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'decoration/catalog.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="catalog-page">
+    <div class="container">
+        <!-- Заголовок и хлебные крошки -->
+        <div class="page-header">
+            <nav class="breadcrumbs">
+                <a href="{% url 'home' %}">Главная</a>
+                <span>/</span>
+                <span class="current">Каталог</span>
+            </nav>
+            <h1 class="page-title">Каталог ингредиентов</h1>
+        </div>
+
+        <div class="catalog-container">
+            <!-- Сайдбар с фильтрами -->
+            <aside class="catalog-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Категории</h3>
+                    <ul class="category-list" id="category-list">
+                        <li class="loading">Загрузка категорий...</li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Фильтр по цене</h3>
+                    <div class="price-filter">
+                        <div class="price-inputs">
+                            <input type="number" id="min-price" placeholder="От" min="0">
+                            <span>-</span>
+                            <input type="number" id="max-price" placeholder="До" min="0">
+                        </div>
+                        <div class="price-slider">
+                            <input type="range" id="price-range-min" min="0" max="10000" value="0">
+                            <input type="range" id="price-range-max" min="0" max="10000" value="10000">
+                        </div>
+                        <button id="apply-price-filter" class="btn btn-small">Применить</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Кухня мира</h3>
+                    <ul class="cuisine-filter">
+                        <li>
+                            <label>
+                                <input type="checkbox" name="cuisine" value="italian">
+                                <span>Итальянская</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input type="checkbox" name="cuisine" value="french">
+                                <span>Французская</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input type="checkbox" name="cuisine" value="asian">
+                                <span>Азиатская</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input type="checkbox" name="cuisine" value="mexican">
+                                <span>Мексиканская</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input type="checkbox" name="cuisine" value="indian">
+                                <span>Индийская</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input type="checkbox" name="cuisine" value="russian">
+                                <span>Русская</span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Наличие</h3>
+                    <div class="availability-filter">
+                        <label>
+                            <input type="checkbox" id="in-stock">
+                            <span>В наличии</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <button id="reset-filters" class="btn btn-outline btn-small">Сбросить фильтры</button>
+                </div>
+            </aside>
+
+            <!-- Основной контент каталога -->
+            <main class="catalog-main">
+                <!-- Панель управления -->
+                <div class="catalog-controls">
+                    <div class="controls-left">
+                        <div class="sort-control">
+                            <label for="sort-by">Сортировка:</label>
+                            <select id="sort-by">
+                                <option value="popular">По популярности</option>
+                                <option value="price_asc">По возрастанию цены</option>
+                                <option value="price_desc">По убыванию цены</option>
+                                <option value="name_asc">По названию (А-Я)</option>
+                                <option value="name_desc">По названию (Я-А)</option>
+                                <option value="new">По новизне</option>
+                            </select>
+                        </div>
+                        
+                        <div class="view-controls">
+                            <button class="view-btn active" data-view="grid">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button class="view-btn" data-view="list">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                    
+                    <div class="controls-right">
+                        <div class="results-info">
+                            <span id="products-count">0</span> товаров
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Контейнер для товаров -->
+                <div class="products-container" id="products-container">
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Загрузка товаров...</p>
+                    </div>
+                </div>
+
+                <!-- Пагинация -->
+                <div class="pagination" id="pagination">
+                    <!-- Пагинация будет сгенерирована JavaScript -->
+                </div>
+            </main>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'work/catalog.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Текущие параметры фильтрации
+    let currentFilters = {
+        category: null,
+        min_price: null,
+        max_price: null,
+        cuisine: [],
+        in_stock: false,
+        search: '{{ request.GET.q|default:"" }}',
+        ordering: 'popular',
+        page: 1
+    };
+
+    // Загрузка категорий
+    loadCategories();
+    
+    // Загрузка товаров
+    loadProducts();
+    
+    // Инициализация элементов управления
+    initControls();
+    
+    // Обработка URL параметров
+    parseUrlParams();
+
+    function loadCategories() {
+        fetch('/api/categories/')
+            .then(response => response.json())
+            .then(categories => {
+                const categoryList = document.getElementById('category-list');
+                categoryList.innerHTML = '';
+                
+                // Добавляем "Все категории"
+                const allItem = document.createElement('li');
+                allItem.innerHTML = `
+                    <label>
+                        <input type="radio" name="category" value="" ${!currentFilters.category ? 'checked' : ''}>
+                        <span>Все категории</span>
+                    </label>
+                `;
+                categoryList.appendChild(allItem);
+                
+                // Добавляем категории
+                categories.forEach(category => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <label>
+                            <input type="radio" name="category" value="${category.slug}" 
+                                   ${currentFilters.category === category.slug ? 'checked' : ''}>
+                            <span>${category.name}</span>
+                            <span class="category-count">${category.products_count || 0}</span>
+                        </label>
+                    `;
+                    categoryList.appendChild(li);
+                });
+                
+                // Обработчики для радио-кнопок категорий
+                categoryList.querySelectorAll('input[name="category"]').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        currentFilters.category = this.value || null;
+                        currentFilters.page = 1;
+                        loadProducts();
+                        updateUrl();
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error loading categories:', error);
+                document.getElementById('category-list').innerHTML = 
+                    '<li class="error">Ошибка загрузки категорий</li>';
+            });
+    }
+
+    function loadProducts() {
+        const container = document.getElementById('products-container');
+        container.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><p>Загрузка товаров...</p></div>';
+        
+        // Формируем URL с параметрами
+        let url = '/api/products/?';
+        const params = [];
+        
+        if (currentFilters.category) {
+            params.push(`category=${currentFilters.category}`);
+        }
+        if (currentFilters.min_price) {
+            params.push(`min_price=${currentFilters.min_price}`);
+        }
+        if (currentFilters.max_price) {
+            params.push(`max_price=${currentFilters.max_price}`);
+        }
+        if (currentFilters.cuisine.length > 0) {
+            currentFilters.cuisine.forEach(cuisine => {
+                params.push(`cuisine=${cuisine}`);
+            });
+        }
+        if (currentFilters.in_stock) {
+            params.push(`in_stock=true`);
+        }
+        if (currentFilters.search) {
+            params.push(`search=${encodeURIComponent(currentFilters.search)}`);
+        }
+        if (currentFilters.ordering) {
+            params.push(`ordering=${currentFilters.ordering}`);
+        }
+        if (currentFilters.page > 1) {
+            params.push(`page=${currentFilters.page}`);
+        }
+        
+        url += params.join('&');
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                container.innerHTML = '';
+                
+                // Обновляем счетчик товаров
+                document.getElementById('products-count').textContent = data.count || 0;
+                
+                if (data.results && data.results.length > 0) {
+                    // Отображаем товары
+                    data.results.forEach(product => {
+                        container.appendChild(createProductCard(product));
+                    });
+                    
+                    // Отображаем пагинацию
+                    renderPagination(data);
+                } else {
+                    container.innerHTML = `
+                        <div class="no-products">
+                            <i class="fas fa-search"></i>
+                            <h3>Товары не найдены</h3>
+                            <p>Попробуйте изменить параметры фильтрации</p>
+                            <button id="clear-all-filters" class="btn btn-primary">Сбросить все фильтры</button>
+                        </div>
+                    `;
+                    
+                    document.getElementById('clear-all-filters').addEventListener('click', resetAllFilters);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading products:', error);
+                container.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3>Ошибка загрузки</h3>
+                        <p>Пожалуйста, попробуйте позже</p>
+                    </div>
+                `;
+            });
+    }
+
+    function createProductCard(product) {
+        const div = document.createElement('div');
+        div.className = 'product-card';
+        
+        const image = product.images && product.images.length > 0 
+            ? product.images[0].image 
+            : '/static/img/default-product.jpg';
+        
+        const rating = product.average_rating || 0;
+        const reviewCount = product.review_count || 0;
+        
+        div.innerHTML = `
+            <div class="product-card-inner">
+                <a href="/ingredient/${product.slug}/" class="product-image-link">
+                    <div class="product-image">
+                        <img src="${image}" alt="${product.name}" loading="lazy">
+                        ${product.stock <= 0 ? '<span class="out-of-stock">Нет в наличии</span>' : ''}
+                        ${product.is_featured ? '<span class="featured-badge">Рекомендуем</span>' : ''}
+                    </div>
+                </a>
+                
+                <div class="product-info">
+                    <a href="/ingredient/${product.slug}/" class="product-name">${product.name}</a>
+                    
+                    <div class="product-category">${product.category ? product.category.name : ''}</div>
+                    
+                    <div class="product-rating">
+                        <div class="stars">
+                            ${generateStars(rating)}
+                        </div>
+                        <span class="review-count">(${reviewCount})</span>
+                    </div>
+                    
+                    <div class="product-description-short">
+                        ${product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description}
+                    </div>
+                    
+                    <div class="product-price-block">
+                        <div class="product-price">${product.formatted_price}</div>
+                        <div class="product-measure">${product.measure_with_weight}</div>
+                    </div>
+                    
+                    <div class="product-actions">
+                        <button class="btn btn-primary add-to-cart-btn" 
+                                data-product-id="${product.id}"
+                                ${product.stock <= 0 ? 'disabled' : ''}>
+                            <i class="fas fa-shopping-cart"></i>
+                            ${product.stock <= 0 ? 'Нет в наличии' : 'В корзину'}
+                        </button>
+                        
+                        <button class="wishlist-btn" data-product-id="${product.id}" title="В список желаний">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                        
+                        <button class="compare-btn" data-product-id="${product.id}" title="Сравнить">
+                            <i class="fas fa-exchange-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Обработчики событий
+        const addToCartBtn = div.querySelector('.add-to-cart-btn');
+        if (addToCartBtn && !addToCartBtn.disabled) {
+            addToCartBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                addToCart(product.id);
+            });
+        }
+        
+        const wishlistBtn = div.querySelector('.wishlist-btn');
+        wishlistBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleWishlist(product.id);
+        });
+        
+        return div;
+    }
+
+    function generateStars(rating) {
+        let stars = '';
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        
+        for (let i = 1; i <= 5; i++) {
+            if (i <= fullStars) {
+                stars += '<i class="fas fa-star"></i>';
+            } else if (i === fullStars + 1 && hasHalfStar) {
+                stars += '<i class="fas fa-star-half-alt"></i>';
+            } else {
+                stars += '<i class="far fa-star"></i>';
+            }
+        }
+        
+        return stars;
+    }
+
+    function renderPagination(data) {
+        const pagination = document.getElementById('pagination');
+        
+        if (!data.previous && !data.next) {
+            pagination.innerHTML = '';
+            return;
+        }
+        
+        let html = '<div class="pagination-inner">';
+        
+        // Кнопка "Назад"
+        if (data.previous) {
+            html += `
+                <a href="#" class="page-link prev" data-page="${currentFilters.page - 1}">
+                    <i class="fas fa-chevron-left"></i> Назад
+                </a>
+            `;
+        }
+        
+        // Номера страниц
+        const totalPages = Math.ceil(data.count / 20); // PAGE_SIZE = 20
+        const currentPage = currentFilters.page;
+        
+        // Показываем ограниченное количество страниц
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, currentPage + 2);
+        
+        if (startPage > 1) {
+            html += `<a href="#" class="page-link" data-page="1">1</a>`;
+            if (startPage > 2) {
+                html += `<span class="page-dots">...</span>`;
+            }
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            html += `
+                <a href="#" class="page-link ${i === currentPage ? 'active' : ''}" data-page="${i}">
+                    ${i}
+                </a>
+            `;
+        }
+        
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                html += `<span class="page-dots">...</span>`;
+            }
+            html += `<a href="#" class="page-link" data-page="${totalPages}">${totalPages}</a>`;
+        }
+        
+        // Кнопка "Вперед"
+        if (data.next) {
+            html += `
+                <a href="#" class="page-link next" data-page="${currentFilters.page + 1}">
+                    Вперед <i class="fas fa-chevron-right"></i>
+                </a>
+            `;
+        }
+        
+        html += '</div>';
+        pagination.innerHTML = html;
+        
+        // Обработчики для пагинации
+        pagination.querySelectorAll('.page-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = parseInt(this.getAttribute('data-page'));
+                if (page && page !== currentFilters.page) {
+                    currentFilters.page = page;
+                    loadProducts();
+                    updateUrl();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+        });
+    }
+
+    function initControls() {
+        // Сортировка
+        const sortSelect = document.getElementById('sort-by');
+        sortSelect.value = currentFilters.ordering;
+        sortSelect.addEventListener('change', function() {
+            currentFilters.ordering = this.value;
+            currentFilters.page = 1;
+            loadProducts();
+            updateUrl();
+        });
+        
+        // Фильтр по цене
+        const minPriceInput = document.getElementById('min-price');
+        const maxPriceInput = document.getElementById('max-price');
+        const applyPriceBtn = document.getElementById('apply-price-filter');
+        
+        if (currentFilters.min_price) {
+            minPriceInput.value = currentFilters.min_price;
+        }
+        if (currentFilters.max_price) {
+            maxPriceInput.value = currentFilters.max_price;
+        }
+        
+        applyPriceBtn.addEventListener('click', function() {
+            currentFilters.min_price = minPriceInput.value || null;
+            currentFilters.max_price = maxPriceInput.value || null;
+            currentFilters.page = 1;
+            loadProducts();
+            updateUrl();
+        });
+        
+        // Кухни мира
+        document.querySelectorAll('input[name="cuisine"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const cuisines = [];
+                document.querySelectorAll('input[name="cuisine"]:checked').forEach(cb => {
+                    cuisines.push(cb.value);
+                });
+                currentFilters.cuisine = cuisines;
+                currentFilters.page = 1;
+                loadProducts();
+                updateUrl();
+            });
+        });
+        
+        // Наличие
+        const inStockCheckbox = document.getElementById('in-stock');
+        inStockCheckbox.checked = currentFilters.in_stock;
+        inStockCheckbox.addEventListener('change', function() {
+            currentFilters.in_stock = this.checked;
+            currentFilters.page = 1;
+            loadProducts();
+            updateUrl();
+        });
+        
+        // Сброс фильтров
+        document.getElementById('reset-filters').addEventListener('click', resetAllFilters);
+        
+        // Переключение вида (сетка/список)
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const view = this.getAttribute('data-view');
+                const container = document.getElementById('products-container');
+                container.className = 'products-container ' + view + '-view';
+            });
+        });
+    }
+
+    function resetAllFilters() {
+        currentFilters = {
+            category: null,
+            min_price: null,
+            max_price: null,
+            cuisine: [],
+            in_stock: false,
+            search: '',
+            ordering: 'popular',
+            page: 1
+        };
+        
+        // Сброс UI элементов
+        document.querySelector('input[name="category"][value=""]').checked = true;
+        document.getElementById('min-price').value = '';
+        document.getElementById('max-price').value = '';
+        document.querySelectorAll('input[name="cuisine"]').forEach(cb => cb.checked = false);
+        document.getElementById('in-stock').checked = false;
+        document.getElementById('sort-by').value = 'popular';
+        
+        loadProducts();
+        updateUrl();
+    }
+
+    function parseUrlParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (urlParams.has('category')) {
+            currentFilters.category = urlParams.get('category');
+        }
+        if (urlParams.has('min_price')) {
+            currentFilters.min_price = urlParams.get('min_price');
+        }
+        if (urlParams.has('max_price')) {
+            currentFilters.max_price = urlParams.get('max_price');
+        }
+        if (urlParams.has('cuisine')) {
+            currentFilters.cuisine = urlParams.getAll('cuisine');
+        }
+        if (urlParams.has('in_stock')) {
+            currentFilters.in_stock = urlParams.get('in_stock') === 'true';
+        }
+        if (urlParams.has('q')) {
+            currentFilters.search = urlParams.get('q');
+        }
+        if (urlParams.has('ordering')) {
+            currentFilters.ordering = urlParams.get('ordering');
+        }
+        if (urlParams.has('page')) {
+            currentFilters.page = parseInt(urlParams.get('page')) || 1;
+        }
+    }
+
+    function updateUrl() {
+        const params = new URLSearchParams();
+        
+        if (currentFilters.category) {
+            params.set('category', currentFilters.category);
+        }
+        if (currentFilters.min_price) {
+            params.set('min_price', currentFilters.min_price);
+        }
+        if (currentFilters.max_price) {
+            params.set('max_price', currentFilters.max_price);
+        }
+        if (currentFilters.cuisine.length > 0) {
+            currentFilters.cuisine.forEach(cuisine => {
+                params.append('cuisine', cuisine);
+            });
+        }
+        if (currentFilters.in_stock) {
+            params.set('in_stock', 'true');
+        }
+        if (currentFilters.search) {
+            params.set('q', currentFilters.search);
+        }
+        if (currentFilters.ordering && currentFilters.ordering !== 'popular') {
+            params.set('ordering', currentFilters.ordering);
+        }
+        if (currentFilters.page > 1) {
+            params.set('page', currentFilters.page);
+        }
+        
+        const url = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        window.history.replaceState(null, '', url);
+    }
+
+    function addToCart(productId) {
+        fetch('/api/cart/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                quantity: 1
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            showNotification('Товар добавлен в корзину!', 'success');
+            updateCartCount();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Ошибка добавления в корзину', 'error');
+        });
+    }
+
+    function toggleWishlist(productId) {
+        {% if user.is_authenticated %}
+        fetch('/api/wishlist/check_product/?product_id=' + productId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.in_wishlist) {
+                    // Удалить из списка желаний
+                    fetch('/api/wishlist/remove_product/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({ product_id: productId })
+                    })
+                    .then(() => {
+                        showNotification('Удалено из списка желаний', 'info');
+                        updateWishlistCount();
+                    });
+                } else {
+                    // Добавить в список желаний
+                    fetch('/api/wishlist/add_product/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({ product_id: productId })
+                    })
+                    .then(() => {
+                        showNotification('Добавлено в список желаний!', 'success');
+                        updateWishlistCount();
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Ошибка работы со списком желаний', 'error');
+            });
+        {% else %}
+        showNotification('Войдите в систему, чтобы использовать список желаний', 'warning');
+        {% endif %}
+    }
+
+    // Вспомогательные функции (getCookie, showNotification, updateCartCount, updateWishlistCount)
+    // должны быть определены в основном скрипте или скопированы из main.html
+});
+</script>
+{% endblock %}
