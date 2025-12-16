@@ -49,7 +49,7 @@
             <div class="auth-actions">
                 {% if user.is_authenticated %}
                     <!-- Для авторизованных пользователей -->
-                    <a href="{% url 'user-profile' %}" class="auth-icon" title="Профиль">
+                    <a href="{% url 'profile' %}" class="auth-icon" title="Профиль">
                         <i class="fas fa-user"></i>
                         <span class="auth-text">{{ user.first_name|default:user.username }}</span>
                     </a>
@@ -166,9 +166,9 @@
             <li><a href="#"><i class="fas fa-phone-alt"></i> Контакты</a></li>
             
             {% if user.is_authenticated %}
-                <li><a href="{% url 'user-profile' %}"><i class="fas fa-user"></i> Профиль</a></li>
-                <li><a href="{% url 'user-orders' %}"><i class="fas fa-box"></i> Мои заказы</a></li>
-                <li><a href="{% url 'wishlist' %}"><i class="fas fa-heart"></i> Список желаний</a></li>
+                <li><a href="{% url 'profile' %}"><i class="fas fa-user"></i> Профиль</a></li>
+                <li><a href="{% url 'orders' %}"><i class="fas fa-box"></i> Мои заказы</a></li>
+                <li><a href="{% url 'wishlist' %}"><i class="fas fa-heart"></i> Понравилось</a></li>
                 <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Выйти</a></li>
             {% else %}
                 <li><a href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i> Войти</a></li>

@@ -18,7 +18,7 @@ SECRET_KEY = 'django-insecure-cv%8#a$2f_8i*6!p)@gq6^kz9&b7x!y+m@o^&!d^h_rv3h#i&s
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.1.25', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['192.168.1.25', 'localhost', '127.0.0.1', '.serveousercontent.com']
 
 # Application definition
 INSTALLED_APPS = [
@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'orders',
     'users',
     'reviews',
+    'wishlist',
 ]
 
 MIDDLEWARE = [
@@ -83,7 +84,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'culinary_store',
         'USER': 'culinary_user',
-        'PASSWORD': 'strong_password',
+        'PASSWORD': 'Lfybtkm25042006',
         'HOST': 'localhost',
         'PORT': '5432',
     }

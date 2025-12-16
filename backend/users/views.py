@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import login, logout
+from django.views.generic import TemplateView
 from .models import User, Profile
 from .serializers import (
     UserSerializer, ProfileSerializer, 
@@ -57,3 +58,6 @@ class UserView(generics.RetrieveUpdateAPIView):
     
     def get_object(self):
         return self.request.user
+    
+class UserOrdersView(TemplateView):
+    template_name = 'users/orders.html'

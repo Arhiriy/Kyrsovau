@@ -1,11 +1,21 @@
 /* Герой-секция */
 .hero-section {
-    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
-                url('../img/hero-bg.jpg');
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+
+    background-image:
+        linear-gradient(
+            rgba(0, 0, 0, 0.7),
+            rgba(0, 0, 0, 0.7)
+        ),
+        url("../img/hero-bg.jpg");
+
     background-size: cover;
     background-position: center;
-    color: white;
-    padding: 100px 0;
+    background-repeat: no-repeat;
+
+    color: #fff;
     text-align: center;
 }
 
